@@ -10,7 +10,7 @@ install.packages("raster")
 install.packages("rgdal")
 
 install.packages("ggmap")
-install.packages("extrafont")
+install.packages("showtext")
 
 library(tidyverse)
 library(readxl)
@@ -26,10 +26,17 @@ library(plyr)
 library(rgdal)
 library(ggmap)
 library(scales)
+library(showtext)
 
-library(extrafont)
-font_import()
-loadfonts(device = "win")
+#Check font in system
+font_files()
+
+#add the font
+font_add("Franklin Gothic Medium","framd.ttf", italic = "framdit.ttf")
+showtext_auto()
+
+windowsFonts(sans=windowsFont("Franklin Gothic Medium"))
+
 
 ##### PRELIMINARY DATA CLEANING #####
 
@@ -65,9 +72,10 @@ incidents %>%
 
 
 #Use new updated file
-ByGov <- read_xlsx("C:/Users/Lily/Desktop/Data Analysis/Iraq War/incidents_edit.xlsx",sheet = "incidents_edit") %>%
+ByGov <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
   dplyr::mutate(Governorate = Gov_2) %>%
   dplyr::mutate(Year = year(StartDate)) %>%
+  #dplyr::mutate(MonthYear = as.factor(substr(as.character(StartDate),1,7))) %>%
   dplyr::group_by(Year,Governorate) %>%
   dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
   dplyr::ungroup() %>%
@@ -109,6 +117,9 @@ ByGov <- read_xlsx("C:/Users/Lily/Desktop/Data Analysis/Iraq War/incidents_edit.
   dplyr::mutate(Year = as.factor(Year)) %>%
   dplyr::arrange(Year,Governorate)
 
+#Add new dataframe with monthyear level
+
+
 
 #Check ByGov data frame
 str(ByGov)
@@ -133,7 +144,7 @@ remove(ByGovUTMWithRank)
 ##### THEME #####
 
 theme.universal <-  
-  theme(text = element_text(family = "Franklin Gothic Medium", color = "#444444")) +
+  theme(text = element_text(family = "sans", color = "#444444")) +
   theme(plot.title = element_text(size = 24)) +
   theme(plot.subtitle = element_text(size = 18)) +
   theme(axis.title = element_text(size = 14)) +
@@ -143,7 +154,7 @@ theme.universal <-
 ##### CHLOROPHLET #####
 
 #get iraq outline map
-gadm <- readRDS("C:/Users/Lily/Desktop/Data Analysis/Iraq War/gadm36_IRQ_1_sp.rds")
+gadm <- readRDS("gadm36_IRQ_1_sp.rds")
 
 #check iraq outline map
 plot(gadm)
@@ -166,7 +177,8 @@ UTM_Name <- mutate(NAME_1,id = rownames(NAME_1))
 gov_1 <- as.data.frame(distinct(ByGov,Governorate) %>% dplyr::arrange(Governorate))
 
 #create ByGov Governorate IDs
-gov_id <- c("1","9","10","2","00","13","12","6","7","14","8","15","3","5","00","16","00","00","4","17","00","00","7","11","00","18")
+#edit IDs
+gov_id <- c("1","9","10","2","00","13","12","6","7","14","8","15","3","5","16","4","17","7","11","00","18")
 
 #Merge ByGov Governorate with newly created IDs
 gov_2 <- cbind(gov_1,gov_id) %>% dplyr::arrange(gov_id)
@@ -237,7 +249,6 @@ levels(ByGovWithRank$Region)
 as.data.frame(ByGovWithRank)
 
 
-#NOTE: tidy this chart,highlight top 5
 ByGovWithRank %>%
   dplyr::group_by(Governorate) %>%
   dplyr::summarize(Casualty = sum(Casualty)) %>%
@@ -251,17 +262,15 @@ ByGovWithRank %>%
   labs(subtitle = "From 2003 until 2017, in order of casualty") +
   scale_fill_manual(values = c("#999999","#CE1126")) +
   scale_y_log10() +
-  scale_x_discrete(expand = c(0,0)) +
   theme.universal +
   theme(axis.text.x = element_blank()) +
   theme(axis.title = element_blank()) +
-  theme(axis.ticks = element_blank()) +
-  theme(panel.grid.major.x = element_blank()) +
+  theme(axis.ticks.x = element_blank()) +
+  theme(axis.ticks.y = element_line(color = "#444444")) +
+  theme(panel.grid.major = element_blank()) +
   coord_flip() +
   theme(legend.position = "none")
   
-
-
 
 ByGovWithRank %>%
   filter(rank <= 10) %>%
@@ -272,12 +281,11 @@ ByGovWithRank %>%
   geom_line(aes(color = gov_top_labels, alpha = gov_flag), size = 2) +
   geom_point(aes(color = gov_top_labels, alpha = gov_flag), size = 2.3) +
   geom_point(color = "#FFFFFF", alpha = .8, size = .3) +
-  #scale_y_log10(breaks = c(100,1000,10000)) +
   theme.universal +
-  geom_text(data = ByGovUTMWithRank %>% filter(Year == "2017", rank <= 10), aes(label = Governorate, x = '2017') , hjust = -.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
-  geom_text(data = ByGovUTMWithRank %>% filter(Year == "2003", rank <= 10), aes(label = Governorate, x = '2003') , hjust = 1.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
+  geom_text(data = ByGovWithRank %>% filter(Year == "2017", rank <= 10), aes(label = Governorate, x = '2017') , hjust = -.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
+  geom_text(data = ByGovWithRank %>% filter(Year == "2003", rank <= 10), aes(label = Governorate, x = '2003') , hjust = 1.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
   scale_x_discrete(expand = c(.2, .2)) +
-  scale_y_reverse(breaks = c(1,5,9)) +
+  scale_y_reverse(breaks = c(1,5,10)) +
   scale_alpha_discrete(range = c(.4,.9)) +
   labs(title = "Governorate Ranking by Casualty\nyear-over-year from 2003 to 2017") +
   labs(subtitle = "(Governorate ranks, by Casualty)") +
