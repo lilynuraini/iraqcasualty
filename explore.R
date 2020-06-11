@@ -12,9 +12,12 @@ install.packages("rgdal")
 install.packages("ggmap")
 install.packages("showtext")
 
+install.packages("zoo")
+
 library(tidyverse)
 library(readxl)
 library(lubridate)
+library(stringr)
 library(rmarkdown)
 library(xlsx)
 library(ggplot2)
@@ -28,10 +31,17 @@ library(ggmap)
 library(scales)
 library(showtext)
 
-#Check font in system
-font_files()
+library(extrafont)
 
-#add the font
+
+#add font using extrafont
+font_import()
+loadfonts(device="win")       #Register fonts for Windows bitmap output
+fonts()  #vector of font family names
+
+
+#add the font using showtext
+font_files() #Check font in system
 font_add("Franklin Gothic Medium","framd.ttf", italic = "framdit.ttf")
 showtext_auto()
 
@@ -72,8 +82,17 @@ incidents %>%
 
 
 #Use new updated file
-ByGov <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
+InitialData <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
   dplyr::mutate(Governorate = Gov_2) %>%
+  dplyr::mutate(Governorate= fct_recode(Governorate,"Border" = "Border/Between Governorates")) %>%
+  dplyr::filter(!Governorate %in% c("Nationwide excluding Baghdad","Outside Iraq","Northern Iraq","Southern Iraq","South-Central Iraq")) %>%
+  droplevels
+  
+
+str(InitialData)
+
+#Yearly-level data  
+ByGov <- InitialData %>%
   dplyr::mutate(Year = year(StartDate)) %>%
   #dplyr::mutate(MonthYear = as.factor(substr(as.character(StartDate),1,7))) %>%
   dplyr::group_by(Year,Governorate) %>%
@@ -102,9 +121,6 @@ ByGov <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
   add_row(Year = 2017, Governorate = "Dohuk", Casualty = 0) %>%
   add_row(Year = 2017, Governorate = "Missan", Casualty = 0) %>%
   add_row(Year = 2017, Governorate = "Wassit", Casualty = 0) %>%
-  dplyr::mutate(Governorate= fct_recode(Governorate,"Border" = "Border/Between Governorates")) %>%
-  dplyr::filter(!Governorate %in% c("Nationwide excluding Baghdad","Outside Iraq","Northern Iraq","Southern Iraq","South-Central Iraq")) %>%
-  droplevels %>%
   dplyr::mutate(Region = fct_collapse(Governorate
                                ,Northern = c("Salah Al-Din","Kirkuk","Sulaymaniyah","Halabjah","Erbil","Dohuk","Ninawa")
                                ,Southern = c("Missan","Thi-Qar","Muthanna","Basra")
@@ -116,9 +132,6 @@ ByGov <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
   dplyr::mutate(Governorate = as.factor(Governorate)) %>%
   dplyr::mutate(Year = as.factor(Year)) %>%
   dplyr::arrange(Year,Governorate)
-
-#Add new dataframe with monthyear level
-
 
 
 #Check ByGov data frame
@@ -143,8 +156,9 @@ remove(ByGovUTMWithRank)
 
 ##### THEME #####
 
+#use extrafont
 theme.universal <-  
-  theme(text = element_text(family = "sans", color = "#444444")) +
+  theme(text = element_text(family = "Franklin Gothic Medium", color = "#444444")) +
   theme(plot.title = element_text(size = 24)) +
   theme(plot.subtitle = element_text(size = 18)) +
   theme(axis.title = element_text(size = 14)) +
@@ -237,6 +251,63 @@ ggplot() +
   theme(panel.grid = element_blank())
   
 
+##### YEARLY CHART #####
+
+ByGov %>%
+  dplyr::group_by(Year) %>%
+  dplyr::summarize(Casualty = sum(Casualty)) %>%
+  dplyr::ungroup() %>%
+  ggplot(aes(x = Year, y = Casualty, label = Casualty)) +
+  geom_bar(stat = "identity",fill = "#CE1126") +
+  geom_text(aes(label = paste(round(Casualty/1000, 0), "K", sep="")), vjust = 2, color = "#FFFFFF", size = 4) + 
+  geom_vline(xintercept = 9.5, color = "#444444")+
+  geom_vline(xintercept = 11.5, color = "#444444") +
+  #geom_hline(yintercept = 32000) +
+  scale_y_continuous(expand = c(.08, .08), labels = scales::unit_format(unit = "k", scale = 1e-3)) +
+  theme.universal +
+  labs(title = "Iraq's Casualty by Year") +
+  theme(panel.grid = element_blank()) +
+  theme(axis.title = element_blank()) +
+  theme(axis.ticks = element_line(color = "#444444")) +
+  theme(axis.ticks.y = element_blank()) +
+  theme(axis.text.y = element_blank()) +
+  theme(panel.grid = element_blank()) +
+  annotate("text", x = 5, y = 35000, label = "US Invasion, Insurgency, and Civil War", color = "#444444", family = "Franklin Gothic Medium") +
+  annotate("text", x = 10.55, y = 35000, label = "Insurgency\n& Protest", color = "#444444", family = "Franklin Gothic Medium") +
+  annotate("text", x = 13.55, y = 35000, label = "ISIS War", color = "#444444", family = "Franklin Gothic Medium")
+
+
+#Backup monthly chart
+InitialData %>%
+  dplyr::mutate(MonthYear = as.factor(substr(as.character(StartDate),1,7))) %>%
+  dplyr::mutate(Year = as.factor(year(StartDate))) %>%
+  dplyr::group_by(MonthYear,Year) %>%
+  dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
+  dplyr::ungroup() %>%
+  ggplot(aes(x = MonthYear, y = Casualty)) +
+  geom_line(stat = "identity", group = 1) +
+  scale_x_discrete(expand = c(.02, .02), breaks = c(
+    "2003-03","2003-06","2003-09","2003-12"
+    ,"2004-03","2004-06","2004-09","2004-12"
+    ,"2005-03","2005-06","2005-09","2005-12"
+    ,"2006-03","2006-06","2006-09","2006-12"
+    ,"2007-03","2007-06","2007-09","2007-12"
+    ,"2008-03","2008-06","2008-09","2008-12"
+    ,"2009-03","2009-06","2009-09","2009-12"
+    ,"2010-03","2010-06","2010-09","2010-12"
+    ,"2011-03","2011-06","2011-09","2011-12"
+    ,"2012-03","2012-06","2012-09","2012-12"
+    ,"2013-03","2013-06","2013-09","2013-12"
+    ,"2014-03","2014-06","2014-09","2014-12"
+    ,"2015-03","2015-06","2015-09","2015-12"
+    ,"2016-03","2016-06","2016-09","2016-12"
+    ,"2017-03"
+  )) +
+  scale_y_continuous(expand = c(.05, .05)) +
+  theme.universal +
+  theme(axis.text.x = element_text(angle = 90,size = 12, lineheight = 3, margin(t = .1, r = .5, b = .1, l = .5), family = "Franklin Gothic Medium")) +
+  theme(axis.title.x = element_blank())
+
 
 ##### RANK CHART #####
 
@@ -267,7 +338,7 @@ ByGovWithRank %>%
   theme(axis.title = element_blank()) +
   theme(axis.ticks.x = element_blank()) +
   theme(axis.ticks.y = element_line(color = "#444444")) +
-  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid = element_blank()) +
   coord_flip() +
   theme(legend.position = "none")
   
