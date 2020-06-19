@@ -29,13 +29,12 @@ library(plyr)
 library(rgdal)
 library(ggmap)
 library(scales)
-library(showtext)
 
 library(extrafont)
 
 
 #add font using extrafont
-font_import()
+#font_import()
 loadfonts(device="win")       #Register fonts for Windows bitmap output
 fonts()  #vector of font family names
 
@@ -158,13 +157,14 @@ remove(ByGovUTMWithRank)
 
 #use extrafont
 theme.universal <-  
-  theme(text = element_text(family = "Franklin Gothic Medium", color = "#444444")) +
-  theme(plot.title = element_text(size = 24)) +
-  theme(plot.subtitle = element_text(size = 18)) +
-  theme(axis.title = element_text(size = 14)) +
-  theme(axis.text = element_text(size = 12))
-
-
+  theme(text = element_text(family = "Franklin Gothic Medium", color = "#444444"),
+        plot.title = element_text(size = 24),
+        plot.subtitle = element_text(size = 18),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)
+  )
+  
+ 
 ##### CHLOROPHLET #####
 
 #get iraq outline map
@@ -251,6 +251,25 @@ ggplot() +
   theme(panel.grid = element_blank())
   
 
+ggplot() + 
+  geom_polygon(data = Iraq_ByGov_Winz, aes(x = long, y = lat, group = group, fill = Casualty), color = "black", size = 0.25) + 
+  theme(aspect.ratio=1) +
+  scale_fill_distiller(name="Casualty", palette = "Reds", direction = 1) +
+  facet_wrap(.~Year,ncol = 5) +
+  labs(title = "Spread of Casualty Year by Year") +
+  theme.universal +
+  theme(
+    strip.text.x = element_text(size = 12),
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 9),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+
+
 ##### YEARLY CHART #####
 
 ByGov %>%
@@ -259,9 +278,10 @@ ByGov %>%
   dplyr::ungroup() %>%
   ggplot(aes(x = Year, y = Casualty, label = Casualty)) +
   geom_bar(stat = "identity",fill = "#CE1126") +
-  geom_text(aes(label = paste(round(Casualty/1000, 0), "K", sep="")), vjust = 2, color = "#FFFFFF", size = 4) + 
-  geom_vline(xintercept = 9.5, color = "#444444")+
-  geom_vline(xintercept = 11.5, color = "#444444") +
+  geom_text(aes(label = paste(round(Casualty/1000, 0), "K", sep="")), vjust = 1.1, color = "#FFFFFF", size = 4) + 
+  #set line size
+  geom_vline(xintercept = 9.5, color = "#444444", size = .5) +
+  geom_vline(xintercept = 11.5, color = "#444444",size = .5) +
   #geom_hline(yintercept = 32000) +
   scale_y_continuous(expand = c(.08, .08), labels = scales::unit_format(unit = "k", scale = 1e-3)) +
   theme.universal +
@@ -368,4 +388,3 @@ ByGovWithRank %>%
   scale_color_manual(values = c("#000000","#007A3D","#DACF2B","#CE1126","#BBBBBB"), labels = c("Western", "Central", "Eastern","Northern","Non Top 5")) +
   guides(alpha = FALSE)
   
-

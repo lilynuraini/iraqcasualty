@@ -1,30 +1,314 @@
 ---
-title: "Iraq Casualty"
-author: "lilynuraini"
-date: "May 21, 2020"
-output: html_document
+title: ""
+author: ""
+date: ""
+output: 
+  html_document:
+    theme : journal
+    highlight : tango
+    code_folding : hide
+    css: style.css
 ---
 
-```{r setup, include=FALSE}
+```{r loading_packages,include = FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+
+
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(stringr)
+library(rmarkdown)
+library(ggplot2)
+library(broom)
+library(maptools)
+library(raster)
+library(plyr)
+library(rgdal)
+library(ggmap)
+library(scales)
+library(extrafont)
 ```
 
-## R Markdown
+```{r loading_data, include = FALSE}
+#Use new updated file
+InitialData <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
+  dplyr::mutate(Governorate = Gov_2) %>%
+  dplyr::mutate(Governorate= fct_recode(Governorate,"Border" = "Border/Between Governorates")) %>%
+  dplyr::filter(!Governorate %in% c("Nationwide excluding Baghdad","Outside Iraq","Northern Iraq","Southern Iraq","South-Central Iraq")) %>%
+  droplevels
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+#Yearly-level data  
+ByGov <- InitialData %>%
+  dplyr::mutate(Year = year(StartDate)) %>%
+  dplyr::group_by(Year,Governorate) %>%
+  dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
+  dplyr::ungroup() %>%
+  add_row(Year = 2003, Governorate = "Dohuk", Casualty = 0) %>%
+  add_row(Year = 2004, Governorate = "Sulaymaniyah", Casualty = 0) %>%
+  add_row(Year = 2004, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2007, Governorate = "Dohuk", Casualty = 0) %>%
+  add_row(Year = 2007, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2009, Governorate = "Dohuk", Casualty = 0) %>%
+  add_row(Year = 2009, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2010, Governorate = "Dohuk", Casualty = 0) %>%
+  add_row(Year = 2010, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2012, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2013, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2014, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2015, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2015, Governorate = "Karbala", Casualty = 0) %>%
+  add_row(Year = 2016, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Qadissiya", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Erbil", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Sulaymaniyah", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Halabjah", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Babil", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Dohuk", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Missan", Casualty = 0) %>%
+  add_row(Year = 2017, Governorate = "Wassit", Casualty = 0) %>%
+  dplyr::mutate(Region = fct_collapse(Governorate
+                               ,Northern = c("Salah Al-Din","Kirkuk","Sulaymaniyah","Halabjah","Erbil","Dohuk","Ninawa")
+                               ,Southern = c("Missan","Thi-Qar","Muthanna","Basra")
+                               ,Western = c("Anbar")
+                               ,Eastern = c("Diyala")
+                               ,Central = c("Baghdad")
+                               ,SouthCentral = c("Karbala","Babil","Wassit","Qadissiya","Najaf"))
+  ) %>%
+  dplyr::mutate(Governorate = as.factor(Governorate)) %>%
+  dplyr::mutate(Year = as.factor(Year)) %>%
+  dplyr::arrange(Year,Governorate)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+```{r defining_main_theme,include = FALSE}
+theme.universal <-  
+  theme(text = element_text(family = "Franklin Gothic Medium", color = "#444444"),
+        plot.title = element_text(size = 24),
+        plot.subtitle = element_text(size = 18),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)
+  )
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#Untitled Project Name
+
+
+##Background
+
+When news about Iran's top general, Qasem Solemani, killed in U.S. drone strike at Baghdad broke out earlier this year, I couldn't help but searched any news related to the topic and somehow found a news about [U.S oil company workers leaving Iraq due to the heightened tension in the region](https://edition.cnn.com/2020/01/03/business/us-oil-company-workers-leaving-iraq/index.html). Quite surprised by the number of oil companies operating in Iraq, I searched again and traced back the history that led me to the infamous early 2000's Iraq - U.S. conflict. From WTC bombings to Iraq war and the aftermath.
+
+When searching the news, I came across this [Iraq Body Count website](https://www.iraqbodycount.org/database/) that provided data of civilian casualty from violence from the beginning of the war, 2013, until February 2017. I took this as an opportunity to visualize the data and incorporate it with the events during the time. 
+
+
+
+##Process
+
+The dataset from Iraq Body Count looks promising. It seems to be clean and ready to use. However, I find that some of the data attributes shown by the website aren't available in the dataset. Instead, they need to be extracted from the available attributes. Because I want to focus on the number and spread of casualty throughout the country, I only select some attributes and clean them to be used later in charts.
+
+I'm still learning how to present data with ggplot so I read multiple blog posts and R videos and use some of them to produce my own chart. These posts about visualisation and analysis in R [part one](https://www.sharpsightlabs.com/blog/shipping-analysis-r-data-wrangling/) and [part two](https://www.r-bloggers.com/how-to-do-an-analysis-in-r-part-2-visualization-and-analysis/) really help me to start creating chart using ggplot. I highly recommend R beginners to read the posts because they explain the process of data analysis and visualization in detail. Other blog posts that help me are [this one](rpubs.com/spoonerf/countrymapggplot2) and [this one](http://prabhasp.com/blog/how-to-make-choropleths-in-r/). Both explain step-by-step process to create map chart.
+
+
+
+##Analysis and Story
+
+In mid March 2003, the beginning of U.S. invasion era, the casualty spreads throughout Iraq but it intensifies in the following years as the result of lawlessness, Sunni-Shia sectarian violence, and insurgency against U.S. military and U.S.-backed Iraqi government. Despite series of military campaign by both U.S and Iraq forces, the situation gets worse and civilian death toll reaches its peak in 2006 and 2007. In June 2007, U.S. commanders decide to arm some of Sunni militant groups, the same groups that used to battle U.S. military, to counter the insurgency. As a result, the security improves and casualty gradually decreases although insurgency still continues and northern, western, and central governorates still have higher number of casualty than the rest. The progress continues until the end of 2011 when U.S. agrees to pull all of the military soldiers out of Iraq. However, violence and attacks escalate after U.S. departure.
+
+
+
+
+
+```{r yearly_overview_chart,fig.height = 5, fig.width = 8, fig.align = "center"}
+ByGov %>%
+  dplyr::group_by(Year) %>%
+  dplyr::summarize(Casualty = sum(Casualty)) %>%
+  dplyr::ungroup() %>%
+  ggplot(aes(x = Year, y = Casualty, label = Casualty)) +
+  geom_bar(stat = "identity",fill = "#CE1126") +
+  geom_text(aes(label = paste(round(Casualty/1000, 0), "K", sep="")), vjust = 1.1, color = "#FFFFFF", size = 4) + 
+  geom_vline(xintercept = 9.5, color = "#444444", size = .5)+
+  geom_vline(xintercept = 11.5, color = "#444444", size = .5) +
+  scale_y_continuous(expand = c(.08, .08), labels = scales::unit_format(unit = "k", scale = 1e-3)) +
+  theme.universal +
+  labs(title = "Iraq's Casualty by Year") +
+  theme(
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_line(color = "#444444"),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  ) +
+  annotate("text", x = 5, y = 35000, label = "US Invasion and Insurgency", color = "#444444", family = "Franklin Gothic Medium") +
+  annotate("text", x = 10.55, y = 35000, label = "Insurgency\n& Protest", color = "#444444", family = "Franklin Gothic Medium") +
+  annotate("text", x = 13.55, y = 35000, label = "ISIS War", color = "#444444", family = "Franklin Gothic Medium")
+
+
+```
+
+
+
+
+
+In addition to the insurgency, in late 2012, massive protests start in Anbar governorate, western Iraq. The protesters, who are Sunnis, feel marginalized in the post-Saddam Iraq with Shia-dominated government, and claim that anti-terrorism laws are allegedly being abused and used to arrest and harass Sunnis. The protests quickly spread to other predominantly Sunni governorates in northern Iraq and continue throughout 2013. The Iraqi forces take a strict measure by attacking the protesters exercising what they consider civil disobedience. Hundreds are killed and injured in clashes between Iraqi forces and protesters. ISIS exploits the situation by recruiting new fighters and launching attacks to take control of western and northern Iraq with the ultimate goal of capturing Baghdad. The data shows an increase of casualty in 2013 and another peak in 2014  with the most intense areas in western, northern, and central Iraq. In contrast, the casualty in the southern provinces are moderate to low. Iraqi forces, with the help from U.S.-led international coalition, launch military campaigns to regain control of ISIS-occupied areas. The campaigns are successful and Iraq captures the areas one by one. In late 2017, Iraq captures ISIS' last two strongholds in Anbar governorate which ends the war. The prime minister declares victory over ISIS.
+
+
+
+
+
+```{r choropleth_data, include = FALSE}
+#get iraq outline map
+gadm <- readRDS("gadm36_IRQ_1_sp.rds")
+
+#Store in a dataframe
+Iraq_UTM <- spTransform(gadm, CRS("+init=EPSG:4667")) 
+
+#Map Iraq_UTM province name with ByGov governorate
+
+#Get Iraq_UTM province name
+NAME_1 <- as.data.frame(Iraq_UTM@data$NAME_1)
+
+#create Iraq_UTM province IDs
+UTM_Name <- mutate(NAME_1,id = rownames(NAME_1))
+
+#get ByGov Governorate
+gov_1 <- as.data.frame(distinct(ByGov,Governorate) %>% dplyr::arrange(Governorate))
+
+#create ByGov Governorate IDs
+#edit IDs
+gov_id <- c("1","9","10","2","00","13","12","6","7","14","8","15","3","5","16","4","17","7","11","00","18")
+
+#Merge ByGov Governorate with newly created IDs
+gov_2 <- cbind(gov_1,gov_id) %>% dplyr::arrange(gov_id)
+
+#join Iraq_UTM province with ByGov Governorate using IDs
+gov_3 <- inner_join(UTM_Name,gov_2, by = c("id" = "gov_id")) %>%
+  dplyr::rename(NAME_1 = `Iraq_UTM@data$NAME_1`)
+
+
+#Join with ByGov data
+ByGovUTM <- inner_join(ByGov,gov_3,by = "Governorate") %>%
+  dplyr::select(Year,Governorate,NAME_1,Casualty)
+
+#Map ByGovUTM with Iraq_UTM, to join data with the polygon
+Iraq_UTM@data$id <- rownames(Iraq_UTM@data)
+Iraq_UTM@data <- join(Iraq_UTM@data, ByGovUTM, by="NAME_1")
+Iraq_ByGov <- tidy(Iraq_UTM)
+Iraq_ByGov <- join(Iraq_ByGov,Iraq_UTM@data, by="id")
+
+
+#Windsorization to narrow the gap
+bench <- 498 + 1.5*IQR(ByGovUTM$Casualty)
+
+Iraq_ByGov_Winz <- Iraq_ByGov
+
+Iraq_ByGov_Winz$Casualty[Iraq_ByGov_Winz$Casualty > bench] <- bench
+
+```
+
+```{r choropleth,fig.height = 5, fig.width = 8, fig.align = "center"}
+#Create choropleth
+ggplot() + 
+  geom_polygon(data = Iraq_ByGov_Winz, aes(x = long, y = lat, group = group, fill = Casualty), color = "black", size = 0.25) + 
+  theme(aspect.ratio=1) +
+  scale_fill_distiller(name="Casualty", palette = "Reds", direction = 1) +
+  facet_wrap(.~Year,ncol = 5) +
+  labs(title = "Spread of Casualty by Year") +
+  theme.universal +
+  theme(
+    strip.text.x = element_text(size = 12),
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 9),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+  
+```
+
+
+
+
+
+Map chart shows the different spread of casualty and how the situation shifts from 2003 to 2017. In 2003, the casualty spreads throughout Iraq with the emphasis in southern and central. This is the result of operation shock-and-awe by U.S. that starts from the south then moves to the central area to topple the Iraqi government in Baghdad. The situation changes in the following years as the insurgency rises and sectarian violence intesifies which lead to the worst number of casualty in 2006 and 2007. In 2008 and 2009, most governorates are less red than the previous year. The number of casualty drops as the security becomes more stable. In 2010 until 2012, the situation improves but western, northern, and eastern governorates are more red than others. The situation worsen in these governorates in 2013 as the protests breakout and the insurgency becomes severe. In 2014 until 2017, the inevitable ISIS war happens in the same governorates that have higher number of casualty since 2010.
+
+
+
+
+
+```{r gov_chart,fig.height = 5, fig.width = 8, fig.align = "center"}
+ByGovWithRank <- ByGov %>%
+  dplyr::group_by(Year) %>%
+  dplyr::mutate(rank = min_rank(desc(Casualty))) %>%
+  dplyr::ungroup()
+
+
+ByGovWithRank %>%
+  dplyr::group_by(Governorate) %>%
+  dplyr::summarize(Casualty = sum(Casualty)) %>%
+  dplyr::ungroup() %>%
+  dplyr::arrange(desc(Casualty)) %>%
+  dplyr::mutate(top_5_flag = ifelse(Governorate %in% c("Baghdad","Ninawa","Anbar","Diyala","Salah Al-Din"),T,F)) %>%
+  ggplot(aes(x = reorder(Governorate,Casualty),y = Casualty)) +
+  geom_bar(aes(fill = top_5_flag),stat = "identity") +
+  geom_text(aes(label = comma(Casualty)), hjust = 1.1, color = "#FFFFFF", size = 4) +
+  labs(title = "Iraq's Deadliest Governorate",
+       subtitle = "From 2003 until 2017, in order of casualty"
+  ) +
+  scale_fill_manual(values = c("#999999","#CE1126")) +
+  scale_y_log10() +
+  theme.universal +
+  theme(
+    axis.text.x = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_line(color = "#444444"),
+    panel.grid = element_blank(),
+    legend.position = "none"
+    
+  )+
+  coord_flip() 
+
+```
+
+
+
+
+
+```{r rank_chart,fig.height = 7, fig.width = 11, fig.align = "center"}
+ByGovWithRank %>%
+  filter(rank <= 10) %>%
+  dplyr::mutate(gov_flag = ifelse(Governorate %in% c("Baghdad","Anbar","Salah Al-Din","Diyala","Ninawa"),T,F)) %>%
+  dplyr::mutate(gov_top_labels = ifelse(gov_flag == T, Region,"other")) %>%
+
+  ggplot(aes(x = Year, y = rank, group = Governorate)) +
+  geom_line(aes(color = gov_top_labels, alpha = gov_flag), size = 2) +
+  geom_point(aes(color = gov_top_labels, alpha = gov_flag), size = 2.3) +
+  geom_point(color = "#FFFFFF", alpha = .8, size = .3) +
+  theme.universal +
+  geom_text(data = ByGovWithRank %>% filter(Year == "2017", rank <= 10), aes(label = Governorate, x = '2017') , hjust = -.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
+  geom_text(data = ByGovWithRank %>% filter(Year == "2003", rank <= 10), aes(label = Governorate, x = '2003') , hjust = 1.05, color = "#888888", size = 4, family = "Franklin Gothic Medium") +
+  scale_x_discrete(expand = c(.2, .2)) +
+  scale_y_reverse(breaks = c(1,5,10)) +
+  scale_alpha_discrete(range = c(.4,.9)) +
+  labs(title = "Governorate Ranking by Casualty",
+       x = "Year",
+       y = "Rank"
+  ) +
+  theme(
+    panel.grid.major.x = element_line(color = "#F3F3F3"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_blank()
+    
+  ) +
+  scale_color_manual(values = c("#000000","#007A3D","#DACF2B","#CE1126","#BBBBBB"), labels = c("Western", "Central", "Eastern","Northern","Non Top 5")) +
+  guides(alpha = FALSE)
+```
+
+##Reference
