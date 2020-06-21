@@ -4,5 +4,22 @@ body {
 }
 
 
+.chart-outline {
+   display: inline-block;
+   margin-left: auto;
+   margin-right: auto;
+   border: 1px solid #d9d9d9;
+   border-radius: 8px;
+   padding: 5px;
+}
 
+.rankchart {
+   display: inline-block;
+   margin: auto;
+   border: 1px solid #d9d9d9;
+   border-radius: 8px;
+   width:800px;
+   height:450px;
+   padding:5px;
+}
 

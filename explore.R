@@ -83,6 +83,7 @@ incidents %>%
 #Use new updated file
 InitialData <- read_xlsx("incidents_edit.xlsx",sheet = "incidents_edit") %>%
   dplyr::mutate(Governorate = Gov_2) %>%
+  dplyr::mutate(StartDate = as_date(StartDate)) %>%
   dplyr::mutate(Governorate= fct_recode(Governorate,"Border" = "Border/Between Governorates")) %>%
   dplyr::filter(!Governorate %in% c("Nationwide excluding Baghdad","Outside Iraq","Northern Iraq","Southern Iraq","South-Central Iraq")) %>%
   droplevels
@@ -272,6 +273,32 @@ ggplot() +
 
 ##### YEARLY CHART #####
 
+timeline <- data.frame(start_date=as_date(c("2003-03-20", "2011-12-19", "2014-01-01")), end_date=as_date(c("2011-12-18", "2013-12-31", "2017-12-09")), event=c("U.S. Invasion & Insurgency", "Protests & Insurgency", "ISIS War"))
+
+
+
+InitialData %>%
+  dplyr::group_by(StartDate) %>%
+  dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
+  dplyr::ungroup() %>%
+  ggplot(aes(x = StartDate, y = Casualty)) +
+  geom_rect(timeline, mapping = aes(xmin = start_date, ymin = 0, xmax = end_date, ymax = Inf, fill = event),inherit.aes = FALSE, alpha = 0.3) +
+  geom_text(timeline,mapping = aes(x = start_date, y = 2000, label = event), size = 3, angle = 90, nudge_x = 50) +
+  geom_line(color = "#CE1126",stat = "identity") +
+  geom_smooth(color = "#007A3D") +
+  #scale_y_continuous(expand = c(.05, .05)) +
+  scale_y_log10() +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  theme.universal +
+  theme(axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        panel.grid = element_blank(),
+        legend.position = "none") +
+  labs(title = "Iraq's Casualty Overtime") +
+  scale_fill_manual(values = c("#000000","#FFFFFF","#CE1126"))
+
+
+#Backup yearly chart
 ByGov %>%
   dplyr::group_by(Year) %>%
   dplyr::summarize(Casualty = sum(Casualty)) %>%
@@ -299,8 +326,8 @@ ByGov %>%
 
 #Backup monthly chart
 InitialData %>%
-  dplyr::mutate(MonthYear = as.factor(substr(as.character(StartDate),1,7))) %>%
-  dplyr::mutate(Year = as.factor(year(StartDate))) %>%
+  dplyr::mutate(MonthYear = as.factor(substr(as.character(StartDate),1,7)) %>%
+  dplyr::mutate(Year = as.factor(year(StartDate)))) %>%
   dplyr::group_by(MonthYear,Year) %>%
   dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
   dplyr::ungroup() %>%
@@ -327,6 +354,7 @@ InitialData %>%
   theme.universal +
   theme(axis.text.x = element_text(angle = 90,size = 12, lineheight = 3, margin(t = .1, r = .5, b = .1, l = .5), family = "Franklin Gothic Medium")) +
   theme(axis.title.x = element_blank())
+
 
 
 ##### RANK CHART #####
