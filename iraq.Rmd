@@ -1,14 +1,12 @@
 ---
-title: "Untitle Project Name"
+title: "Iraq Casualty"
 author: "[Lily Nur Aini](https://github.com/lilynuraini)"
-date: ""
-mail: "lily_nuraini@ymail.com"
-github: "lilynuraini"
+date: "22 June 2020"
 output: 
   html_document:
+    includes:
+      before_body: header.html
     theme : journal
-    highlight : tango
-    code_folding : hide
     css: style.css
 ---
 
@@ -123,7 +121,7 @@ I'm still learning how to present data with ggplot so I read multiple blog posts
 
 ##Analysis and Story
 
-In mid March 2003, the beginning of U.S. invasion era, the casualty spreads throughout Iraq but it intensifies in the following years as the result of lawlessness, Sunni-Shia sectarian violence, and insurgency against U.S. military and U.S.-backed Iraqi government. Despite series of military campaign by both U.S and Iraqi forces, the situation gets worse and civilian death toll reaches its peak in 2006 and 2007. In June 2007, U.S. commanders decide to arm some of Sunni militant groups, the same groups that used to battle U.S. military, to counter the insurgency. As a result, the security improves and casualty gradually decreases although insurgency still continues and some governorates still have higher number of casualty than the rest. The progress continues until the end of 2011 when U.S. agrees to pull all of the military soldiers out of Iraq. However, violence and attacks escalate after U.S. departure.
+In mid March 2003, the beginning of U.S. invasion era, the casualty spreads throughout Iraq but it intensifies in the following years as the result of lawlessness, Sunni-Shia sectarian violence, and insurgency against U.S. military and U.S.-backed Iraqi government. Despite series of military campaign by both U.S and Iraqi forces, the situation gets worse and civilian death toll reaches its peak in 2006 and 2007. In June 2007, U.S. commanders decide to arm some of Sunni militant groups, the same groups that used to battle U.S. military, to counter the insurgency. As the result, the security improves and casualty gradually decreases although insurgency still continues and some governorates have higher number of casualty than the rest. The progress continues until the end of 2011 when U.S. agrees to pull all of the military soldiers out of Iraq. However, violence and attacks escalate after U.S. departure.
 <br><br>
 
 <center>
@@ -134,7 +132,7 @@ InitialData %>%
   dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
   dplyr::ungroup() %>%
   ggplot(aes(x = StartDate, y = Casualty)) +
-  geom_rect(timeline, mapping = aes(xmin = start_date, ymin = 0, xmax = end_date, ymax = Inf, fill = event),inherit.aes = FALSE, alpha = 0.3) +
+  geom_rect(timeline, mapping = aes(xmin = start_date, ymin = 0, xmax = end_date, ymax = Inf, fill = event),inherit.aes = FALSE, alpha = 0.15) +
   geom_text(timeline,mapping = aes(x = start_date, y = 2000, label = event), size = 3, angle = 90, nudge_x = 50) +
   geom_line(color = "#CE1126",stat = "identity") +
   geom_smooth(color = "#007A3D") +
@@ -155,7 +153,7 @@ InitialData %>%
 </center>
 <br><br>
 
-In addition to the insurgency and sectarian violence, in late 2012, massive protests start in Anbar governorate, western Iraq. The protesters, who are Sunnis, feel marginalized in the post-Saddam Iraq with Shia-dominated government, and claim that anti-terrorism laws are allegedly being abused and used to arrest and harass Sunnis. The protests quickly spread to other predominantly Sunni governorates in northern Iraq and continue throughout 2013. The Iraqi forces take a strict measure by attacking the protesters exercising what they consider civil disobedience. Hundreds are killed and injured in clashes between Iraqi forces and protesters. Sectarian violence, bombing, and kidnapping are going rampant. ISIS exploits the situation by recruiting new fighters and launching attacks to take control of western and northern Iraq with the ultimate goal of capturing Baghdad. The data shows an significant increase of casualty in 2013 and another peak in 2014 with the most intense areas in western, northern, and central Iraq. Iraqi forces, with the help from U.S.-led international coalition, launch military campaigns to regain control of ISIS-occupied areas. The campaigns are successful and Iraq captures the areas one by one. In late 2017, Iraq captures ISIS' last two strongholds in Anbar governorate which ends the war. The prime minister declares victory over ISIS.
+In addition to the insurgency and sectarian violence, in late 2012, massive protests start in Anbar governorate, western Iraq. The protesters, who are Sunnis, feel marginalized in the post-Saddam Iraq with Shia-dominated government and claim that anti-terrorism laws are allegedly being abused and used to arrest and harass Sunnis. The protests quickly spread to other predominantly Sunni governorates in northern Iraq and continue throughout 2013. The Iraqi forces take a strict measure by attacking the protesters exercising what they consider civil disobedience. Hundreds are killed and injured in clashes between Iraqi forces and protesters. Sectarian violence, bombing, and kidnapping are going rampant. ISIS exploits the situation by recruiting new fighters and launching attacks to take control of western and northern Iraq with the ultimate goal of capturing Baghdad. The data shows a significant increase of casualty in 2013 and another peak in 2014 with the most intense areas in western, northern, and central Iraq. Iraqi forces, with the help from U.S.-led international coalition, launch military campaigns to regain control of ISIS-occupied areas. The campaigns are successful and Iraq captures the areas one by one. In late 2017, Iraq captures ISIS' last two strongholds in Anbar governorate which ends the war. The prime minister declares victory over ISIS.
 <br><br>
 
 ```{r choropleth_data, include = FALSE}
@@ -234,7 +232,8 @@ ggplot() +
 
 Map chart shows the different spread of casualty and how the situation shifts from 2003 to 2017. In 2003, the casualty spreads throughout Iraq with the emphasis in southern and central. This is the result of operation shock-and-awe by U.S. that starts from the south then moves to the central area to topple the Iraqi government in Baghdad. The situation changes in the following years as the insurgency rises and sectarian violence intesifies which lead to the worst number of casualty in 2006 and 2007. In 2008 and 2009, most governorates are in lighter shade of red than the previous year. The number of casualty drops as the security becomes more stable. In 2010 until 2012, the situation improves but western, northern, and eastern governorates are in darker shade than the others. Clashes between protesters and police forces, sectarian violence, and insurgency escalate in 2013. A step back for national security causing a spike in casualty. In 2014 until 2017, the inevitable ISIS war happens in the same governorates that have higher number of casualty since 2010.
 
-Despite all the horrible things that happen in Iraq, they don't have the same impact for some areas. Notice the northeastern governorates are in the lightest shade since the beginning of the war. Also, the security in southern Iraq improves. The southern governorates have high number of casualty in the beginning but they change overtime.
+Despite the attack and violence, the intensity of casualty differs from each governorate.
+Notice the governorates in north east Iraq are in the lightest shade since the beginning of the war. Also, the security in southern Iraq improves. The southern governorates have high number of casualty in the beginning but they change overtime.
 <br><br>
 <center>
 ```{r gov_chart,class = "chart-outline"}
@@ -309,7 +308,44 @@ ByGovWithRank %>%
 </center>
 <br><br>
 
-Rank chart shows that the rank of casualty changes overtime. Top highest casualty governorates in 2003 change drastically the next year. Western, northern, and eastern governorates rises to the top and stay until 2017.
+Rank chart shows the shift of casualty. Top highest casualty governorates in 2003 change drastically the next year. Western, northern, and eastern governorates dominate the top spot until 2017.
 
 
 ##Reference
+
+###News related
+1. Beauchamp, Z., Fisher, M., & Matthews, D. (2014, August 8). 27 maps that explain
+the crisis in Iraq. *Vox*. Retrieved from https://www.vox.com/a/maps-explain-crisis-iraq
+
+2. British Broadcasting Corporation. (2016, July 5). Timeline: Iraq War. *BBC News*. Retrieved from https://www.bbc.com/news/amp/magazine-36702957
+
+3. Council On Foreign Relations. (n.d.). The Iraq War. *Council On Foreign Relations*. Retrieved from https://www.cfr.org/timeline/iraq-war
+
+4. Crichton, K., Jacquette, R.F. & Lamb, G.  (2010, August 31). Timeline of Major Events in the Iraq War. *The New York Times*. Retrieved from https://archive.nytimes.com/www.nytimes.com/interactive/2010/08/31/world/middleeast/20100831-Iraq-Timeline.html?mcubz=0#/#time111_3265
+
+5. Dunham, W. (2011, October 22). Timeline: Timeline of Iraq war. *Reuters*. Retrieved from https://www.reuters.com/article/us-iraq-usa-war/timeline-timeline-of-iraq-war-idUSTRE79K5YH20111021
+
+6. Gilligan, A. (2009, November 22). Iraq report: Timeline - before and after the war. *The Telegraph*. Retrieved from https://www.telegraph.co.uk/news/uknews/defence/6625840/Iraq-report-Timeline-before-and-after-the-war.html
+
+7. Hamasaeed, S., & Nada, G. (2020, May 29). Iraq Timeline: Since the 2003 War. *United States Institute Of Peace*. Retrieved from https://www.usip.org/publications/2020/05/iraq-timeline-2003-war
+
+8. Harding, L. (2016, July 6). Iraq war inquiry: timeline of conflict. *The Guardian*. Retrieved from https://www.theguardian.com/world/2016/jul/05/iraq-war-inquiry-timeline-of-conflict
+
+9. History.com Editors. (2019, February 1). A Timeline of the U.S.-Led War on Terror. *History*. Retrieved from https://www.history.com/.amp/topics/21st-century/war-on-terror-timeline
+
+10. Iraq Body Count. (n.d.). Iraq Body Count. Retrieved from https://www.iraqbodycount.org/
+
+11. Time. (n.d.). Seven Years in Iraq: An Iraq War Timeline. *Time*. Retrieved from http://content.time.com/time/specials/packages/completelist/0,29569,1967340,00.html
+
+12. Ziady, H., & CNN Business. (2020, January 3). US oil workers are leaving Iraq. Exxon Mobil has operations there. *CNN Business*. Retrieved from https://edition.cnn.com/2020/01/03/business/us-oil-company-workers-leaving-iraq/index.html
+
+
+
+###ggplot related
+1. Pokharel, P. (2013, February 27). How to make choropleth maps with R [Blog post]. Retrieved from http://prabhasp.com/blog/how-to-make-choropleths-in-r/
+
+2. Sharp Sight. (2017, January 18). How To Really Do An Analysis In R (Part 1, Data Manipulation) [Blog post]. Retrieved from https://www.sharpsightlabs.com/blog/shipping-analysis-r-data-wrangling/
+
+3. Sharp Sight. (2017, January 24). How To Do An Analysis In R (Part 2, Visualization And Analysis) [Blog post]. Retrieved from https://www.sharpsightlabs.com/blog/shipping-analysis-r-data-visualization/
+
+4. Spooner, F. (2016, March 10). Making a Country Level Map Using ggplot2 [Blog post]. Retrieved from https://rpubs.com/spoonerf/countrymapggplot2

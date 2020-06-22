@@ -282,7 +282,7 @@ InitialData %>%
   dplyr::summarize(Casualty = sum(`Reported Maximum`)) %>%
   dplyr::ungroup() %>%
   ggplot(aes(x = StartDate, y = Casualty)) +
-  geom_rect(timeline, mapping = aes(xmin = start_date, ymin = 0, xmax = end_date, ymax = Inf, fill = event),inherit.aes = FALSE, alpha = 0.3) +
+  geom_rect(timeline, mapping = aes(xmin = start_date, ymin = 0, xmax = end_date, ymax = Inf, fill = event),inherit.aes = FALSE, alpha = 0.15) +
   geom_text(timeline,mapping = aes(x = start_date, y = 2000, label = event), size = 3, angle = 90, nudge_x = 50) +
   geom_line(color = "#CE1126",stat = "identity") +
   geom_smooth(color = "#007A3D") +
