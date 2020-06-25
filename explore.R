@@ -11,6 +11,7 @@ install.packages("rgdal")
 
 install.packages("ggmap")
 install.packages("showtext")
+install.packages("extrafont")
 
 install.packages("zoo")
 
